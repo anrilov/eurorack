@@ -122,9 +122,18 @@ void Process(IOBuffer::Block* block, size_t size) {
     // nearest patched channel above it (channel 6 down to channel 1), until
     // the next patched jack starts a new normalization chain. A channel with
     // nothing patched above it (and not patched itself) gets no gate at all.
+    //
+    // Which channel counts as "patched" here uses chain_state's debounced
+    // per-channel flag (the same one Configure() uses to decide has_trigger)
+    // rather than the raw per-block input_patched: the raw jack-detection
+    // probe can occasionally misread for a single block, and since that
+    // would only need to be wrong once to swap which channel a group
+    // normalizes from mid-stream, keeping routing on the debounced signal
+    // avoids momentary/spurious re-routing glitches. The actual gate samples
+    // routed through are still the source channel's real, undebounced flags.
     const GateFlags* normalized_source = no_gate;
     for (int channel = kNumChannels - 1; channel >= 0; --channel) {
-      if (block->input_patched[channel]) {
+      if (chain_state.input_patched(channel)) {
         normalized_source = block->input[channel];
       }
       gate_source[channel] = normalized_source;
