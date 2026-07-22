@@ -91,6 +91,27 @@ uint32_t WaveColor(float phase) {
       stops[segment], stops[segment + 1], scaled - static_cast<float>(segment));
 }
 
+// Color at elapsed_ms into a synchronized double pulse: two full passes of
+// off -> green -> yellow -> red -> yellow -> green -> off, smoothly
+// cross-faded. Off once both passes are done.
+uint32_t PulseColor(uint32_t elapsed_ms) {
+  const uint32_t kSegmentMs = 100;
+  const uint32_t kSegmentsPerCycle = 6;
+  const uint32_t kCycles = 2;
+  const uint32_t stops[kSegmentsPerCycle + 1] = {
+    LED_COLOR_OFF, LED_COLOR_GREEN, LED_COLOR_YELLOW, LED_COLOR_RED,
+    LED_COLOR_YELLOW, LED_COLOR_GREEN, LED_COLOR_OFF,
+  };
+  if (elapsed_ms >= kSegmentMs * kSegmentsPerCycle * kCycles) {
+    return LED_COLOR_OFF;
+  }
+  uint32_t within_cycle = elapsed_ms % (kSegmentMs * kSegmentsPerCycle);
+  uint32_t segment = within_cycle / kSegmentMs;
+  float t = static_cast<float>(within_cycle % kSegmentMs)
+      / static_cast<float>(kSegmentMs);
+  return LerpColor(stops[segment], stops[segment + 1], t);
+}
+
 }  // namespace
 
 void Ui::Init(Settings* settings, ChainState* chain_state, CvReader* cv_reader, EnvelopeMode* eg_mode) {
@@ -546,6 +567,18 @@ void Ui::UpdateLEDs() {
           }
         }
       }
+    }
+  } else if (multimode == MULTI_MODE_STAGES &&
+             (chain_state_->status() == ChainState::CHAIN_REINITIALIZING ||
+              chain_state_->status() == ChainState::CHAIN_DISCOVERING_NEIGHBORS)) {
+    // Entry pulse: channel 1's LED stays solid red (indicating the target
+    // mode), while the other 5 channels flash together, twice, through
+    // off -> green -> yellow -> red -> yellow -> green -> off.
+    uint32_t elapsed = ms - mode_switch_time_;
+    uint32_t pulse = PulseColor(elapsed);
+    for (size_t i = 0; i < kNumChannels; ++i) {
+      leds_.set(LED_GROUP_UI + i, i == 0 ? LED_COLOR_RED : pulse);
+      leds_.set(LED_GROUP_SLIDER + i, LED_COLOR_OFF);
     }
   } else if (multimode == MULTI_MODE_STAGES_ADVANCED_INDEPENDENT &&
              (chain_state_->status() == ChainState::CHAIN_REINITIALIZING ||
