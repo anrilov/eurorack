@@ -180,6 +180,7 @@ class SegmentGenerator {
     i += type * 4;
     ProcessFn new_process_fn =
         (multimode_ == MULTI_MODE_STAGES_ADVANCED
+        || multimode_ == MULTI_MODE_STAGES_ADVANCED_INDEPENDENT
         ? advanced_process_fn_table_ : process_fn_table_)[i];
     if (new_process_fn != process_fn_
         || segments_[0].range != segment_configuration.range) {
