@@ -311,9 +311,10 @@ void Ui::Poll() {
       }
     }
   }
-  if (settings_->PollSave()) {
-    save_blink_counter_ = kSaveBlinkMs;
-  }
+  // PollSave() still needs to be called every tick to actually flush the
+  // debounced state save to flash - just no longer flashing all LEDs off
+  // as a save indicator.
+  settings_->PollSave();
 }
 
 void Ui::MultiModeToggle(const uint8_t i) {
@@ -354,9 +355,7 @@ void Ui::UpdateLEDs() {
   ChainState::ChainStateStatus status = chain_state_->status();
   const uint32_t ms = system_clock.milliseconds();
 
-  if (save_blink_counter_ > 0 ) {
-    save_blink_counter_--; // LEDs already cleared, so don't need to do anything
-  } else if (mode_ == UI_MODE_FACTORY_TEST) {
+  if (mode_ == UI_MODE_FACTORY_TEST) {
 
     size_t counter = (ms >> 8) % 3;
     for (size_t i = 0; i < kNumChannels; ++i) {
