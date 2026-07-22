@@ -162,7 +162,20 @@ static void advance_tm(
   uint16_t sr = shift_register;
   uint16_t copied_bit = (sr << (steps - 1)) & (1 << 15);
   uint16_t mutated = copied_bit ^ ((Random::GetFloat() < prob) << 15);
-  sr = (sr >> 1) | mutated;
+  // Only rotate the top `steps` bits (the active loop); bits below that
+  // window are left completely untouched. Previously the whole 16-bit
+  // register shifted every call regardless of `steps`, so after enough
+  // advances at a small step count the entire register - including bits
+  // belonging to a larger step count - got overwritten with the short
+  // loop's content. That meant temporarily lowering the step count and
+  // then raising it back up permanently lost whatever longer sequence had
+  // been recorded. Confining the rotation to the active window keeps the
+  // untouched bits intact, so raising `steps` again reveals the original
+  // longer sequence exactly as it was.
+  uint16_t window_mask = static_cast<uint16_t>(0xffffu << (16 - steps));
+  uint16_t rotated_window =
+      (((sr & window_mask) >> 1) | mutated) & window_mask;
+  sr = (sr & static_cast<uint16_t>(~window_mask)) | rotated_window;
   shift_register = sr;
   register_value = (float)(shift_register) / 65535.0f;
   if (bipolar) {
