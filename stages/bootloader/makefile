@@ -42,7 +42,7 @@ PACKAGES       = stages/bootloader \
 		stmlib/system
 RESOURCES      = stages/resources
 
-TOOLCHAIN_PATH ?=
+TOOLCHAIN_PATH ?= /usr/local/arm-4.8.3/
 
 include stmlib/makefile.inc
 
