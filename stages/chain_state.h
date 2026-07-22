@@ -333,6 +333,12 @@ class ChainState {
   uint16_t last_local_config_[kNumChannels];
   bool dirty_[kMaxNumChannels];
 
+  // For MULTI_MODE_STAGES_ADVANCED_INDEPENDENT: whether each channel was last
+  // configured with a trigger (i.e. it, or a channel it normalizes down
+  // from, was patched). Used to detect when normalization changes which
+  // channel actually feeds a trigger, so we know to reconfigure it.
+  bool independent_has_trigger_[kNumChannels];
+
   int16_t switch_press_time_[kMaxNumChannels];
   uint16_t unpatch_counter_[kNumChannels];
   LoopStatus loop_status_[kNumChannels];

@@ -90,6 +90,7 @@ void ChainState::Reinit(const Settings& settings) {
   fill(&loop_status_[0], &loop_status_[kNumChannels], LOOP_STATUS_NONE);
   fill(&switch_pressed_[0], &switch_pressed_[kMaxChainSize], 0);
   fill(&switch_press_time_[0], &switch_press_time_[kMaxNumChannels], 0);
+  fill(&independent_has_trigger_[0], &independent_has_trigger_[kNumChannels], false);
 
   request_.request = REQUEST_NONE;
 
@@ -336,8 +337,24 @@ void ChainState::Configure(
       } else {
         // Create a free-running channel.
         segment::Configuration c = local_channel(i)->configuration(local_configs[i]);
-        segment_generator[i].ConfigureSingleSegment(
-            force_independent && has_gate_source[i], c);
+        if (force_independent) {
+          bool has_trigger = has_gate_source[i];
+          // Only reconfigure when something actually changed: this channel's
+          // own config/patch state (dirty_), whether normalization now feeds
+          // it a trigger or not, or its generator being in a stale state
+          // (e.g. right after a mode switch). Configuring unconditionally
+          // every cycle (as ConfigureSingleSegment does on its own) resets
+          // PLL/clock tracking on every call, which breaks clocked/looping
+          // segments.
+          if (dirty_[channel]
+              || has_trigger != independent_has_trigger_[i]
+              || segment_generator[i].num_segments() != 1) {
+            segment_generator[i].Configure(has_trigger, &c, 1);
+            independent_has_trigger_[i] = has_trigger;
+          }
+        } else {
+          segment_generator[i].ConfigureSingleSegment(false, c);
+        }
         binding_[num_bindings_].generator = i;
         binding_[num_bindings_].source = i;
         binding_[num_bindings_].destination = 0;
