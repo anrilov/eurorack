@@ -53,6 +53,12 @@ endif
 
 include stmlib/makefile.inc
 
+# stmlib/makefile.inc always appends "bin/" to TOOLCHAIN_PATH to build
+# TOOLCHAIN_BIN, so an empty TOOLCHAIN_PATH still points at a broken
+# relative "bin/arm-none-eabi-gcc" instead of falling back to $PATH.
+# Clear TOOLCHAIN_BIN itself so CC/CXX/etc resolve as bare command names.
+TOOLCHAIN_BIN =
+
 # Rule for building the firmware update file
 wav_old:  $(TARGET_BIN)
 	python stm_audio_bootloader/qpsk/encoder.py \
