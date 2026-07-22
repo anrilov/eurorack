@@ -83,6 +83,9 @@ namespace stages {
       case MULTI_MODE_SIX_INDEPENDENT_EGS:
         ProcessSixIndependentEgs(block, size);
         break;
+      case MULTI_MODE_SIX_IDENTICAL_EGS:
+        ProcessSixIdenticalEgs(block, size);
+        break;
       default:
         break;
     }
@@ -173,6 +176,49 @@ namespace stages {
         == IDLE) {
       ui_->set_led(active_envelope_, LED_COLOR_YELLOW);
     }
+  }
+
+  void EnvelopeMode::ProcessSixIdenticalEgs(
+    IOBuffer::Block* block, size_t size
+  ) {
+
+    // Don't do any processing during warmup.
+    if (warm_time_ > 0) {
+      --warm_time_;
+      ForEachChannel(ch) {
+        for (size_t i = 0; i < size; ++i) {
+          block->output[ch][i] = settings_->dac_code(ch, 0.f);
+        }
+      }
+      return;
+    }
+
+    // Slider LEDs
+    ui_->set_slider_led(0, envelope_manager_.get_envelope(0).HasDelay(), 1);
+    ui_->set_slider_led(1, envelope_manager_.get_envelope(0).HasAttack(), 1);
+    ui_->set_slider_led(2, envelope_manager_.get_envelope(0).HasHold(), 1);
+    ui_->set_slider_led(3, envelope_manager_.get_envelope(0).HasDecay(), 1);
+    ui_->set_slider_led(4, envelope_manager_.get_envelope(0).HasSustain(), 1);
+    ui_->set_slider_led(5, envelope_manager_.get_envelope(0).HasRelease(), 1);
+
+    // Set pots params
+    envelope_manager_.SetAllAttackCurve(block->pot[1]);
+    envelope_manager_.SetAllDecayCurve(block->pot[3]);
+    envelope_manager_.SetAllSustainLength(block->pot[4]);
+    envelope_manager_.SetAllReleaseCurve(block->pot[5]);
+
+    // Set slider params
+    envelope_manager_.SetAllDelayLength(block->cv_slider[0]);
+    envelope_manager_.SetAllAttackLength(block->cv_slider[1]);
+    envelope_manager_.SetAllHoldLength(block->cv_slider[2]);
+    envelope_manager_.SetAllDecayLength(block->cv_slider[3]);
+    envelope_manager_.SetAllSustainLevel(block->cv_slider[4]);
+    envelope_manager_.SetAllReleaseLength(block->cv_slider[5]);
+
+    uint32_t manual_gates = 0;
+    ForEachChannel(ch) manual_gates
+      |= static_cast<int>(ui_->switches().pressed(ch)) << ch;
+    ProcessEGs(block, manual_gates, size);
   }
 
   void EnvelopeMode::HandleSwitches(const UIParams& params) {

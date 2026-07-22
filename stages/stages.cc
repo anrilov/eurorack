@@ -113,35 +113,12 @@ void Process(IOBuffer::Block* block, size_t size) {
       &settings,
       &segment_generator[0],
       out);
-
-  // Which gate/trigger stream feeds each channel's segment generator.
-  const GateFlags* gate_source[kNumChannels];
-  if ((MultiMode) settings.state().multimode
-      == MULTI_MODE_STAGES_ADVANCED_INDEPENDENT) {
-    // Normalization: an unpatched channel inherits the gate/trigger of the
-    // nearest patched channel above it (channel 6 down to channel 1), until
-    // the next patched jack starts a new normalization chain. A channel with
-    // nothing patched above it (and not patched itself) gets no gate at all.
-    const GateFlags* normalized_source = no_gate;
-    for (int channel = kNumChannels - 1; channel >= 0; --channel) {
-      if (block->input_patched[channel]) {
-        normalized_source = block->input[channel];
-      }
-      gate_source[channel] = normalized_source;
-    }
-  } else {
-    for (size_t channel = 0; channel < kNumChannels; ++channel) {
-      gate_source[channel] =
-          block->input_patched[channel] ? block->input[channel] : no_gate;
-    }
-  }
-
   for (size_t channel = 0; channel < kNumChannels; ++channel) {
     // Doing the shift here was found to have better performance that in the
     // conditional below. wtf...
     out->changed_segments >>= 1;
     bool led_state = segment_generator[channel].Process(
-        gate_source[channel],
+        block->input_patched[channel] ? block->input[channel] : no_gate,
         out,
         size);
     ui.set_slider_led(channel, led_state, 5);
@@ -389,6 +366,7 @@ int main(void) {
       io_buffer.Process(&Process); // Still discovering neighbors, dont't process alternative multi-modes
     } else {
       switch ((MultiMode) settings.state().multimode) {
+        case MULTI_MODE_SIX_IDENTICAL_EGS:
         case MULTI_MODE_SIX_INDEPENDENT_EGS:
           io_buffer.Process(&ProcessEnvelopes);
           break;

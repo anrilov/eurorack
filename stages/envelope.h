@@ -39,9 +39,13 @@ class Envelope {
 
     inline void SetLooping(bool l) { loop = l; }
 
+    inline bool HasDelay  () { return HasStage(DELAY  ); };
     inline bool HasAttack () { return HasStage(ATTACK ); };
+    inline bool HasHold   () { return HasStage(HOLD   ); };
     inline bool HasDecay  () { return HasStage(DECAY  ); };
+    inline bool HasSustain() { return sustainLevel > 0.001f; };
     inline bool HasMinSustain() { return HasStage(SUSTAIN); };
+    inline bool HasRelease() { return HasStage(RELEASE); };
     inline bool IsLooping() { return loop; }
     
     inline EnvelopeStage CurrentStage() { return stage; }

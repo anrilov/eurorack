@@ -90,7 +90,6 @@ void ChainState::Reinit(const Settings& settings) {
   fill(&loop_status_[0], &loop_status_[kNumChannels], LOOP_STATUS_NONE);
   fill(&switch_pressed_[0], &switch_pressed_[kMaxChainSize], 0);
   fill(&switch_press_time_[0], &switch_press_time_[kMaxNumChannels], 0);
-  fill(&independent_has_trigger_[0], &independent_has_trigger_[kNumChannels], false);
 
   request_.request = REQUEST_NONE;
 
@@ -102,10 +101,6 @@ void ChainState::Reinit(const Settings& settings) {
   if (settings.state().multimode == MULTI_MODE_STAGES_ADVANCED) {
     leftKey = kAdvancedLeftKey;
     rightKey = kAdvancedRightKey;
-  } else if (settings.state().multimode == MULTI_MODE_STAGES_ADVANCED_INDEPENDENT) {
-    // Channels never group, even across chained modules, so there's no need
-    // to discover/synchronize with neighboring modules.
-    status_ = CHAIN_READY;
   } else if (settings.in_seg_gen_mode()) {
     // Standard and slow LFO are the same
     leftKey = kSimpleLeftKey;
@@ -303,33 +298,14 @@ void ChainState::Configure(
   const uint16_t *local_configs = settings.state().segment_configuration;
   const MultiMode mode = static_cast<MultiMode>(settings.state().multimode);
 
-  // In this mode, channels never group into multi-segment envelopes: every
-  // channel is always its own independent single segment (like the advanced
-  // free-running channel case below), regardless of its own patched state.
-  // Whether that channel actually receives a trigger (as opposed to running
-  // free) depends on whether it, or some higher-numbered channel it
-  // normalizes down from, has a patched gate/trigger input - see
-  // has_gate_source below and the normalization logic in stages.cc.
-  const bool force_independent = mode == MULTI_MODE_STAGES_ADVANCED_INDEPENDENT;
-  bool has_gate_source[kNumChannels];
-  if (force_independent) {
-    bool source_found = false;
-    for (int i = kNumChannels - 1; i >= 0; --i) {
-      if (local_channel(i)->input_patched()) {
-        source_found = true;
-      }
-      has_gate_source[i] = source_found;
-    }
-  }
-
   attenuate_ = 0;
   process_cv_ = 0;
 
   for (size_t i = 0; i < kNumChannels; ++i) {
     size_t channel = local_channel_index(i);
     segment_generator[i].SetMode(mode);
-    if (force_independent || !local_channel(i)->input_patched()) {
-      if (!force_independent && channel > last_patched_channel) {
+    if (!local_channel(i)->input_patched()) {
+      if (channel > last_patched_channel) {
         // Create a slave channel - we are just extending a chain of segments.
         size_t segment = channel - last_patched_channel;
         segment_generator[i].ConfigureSlave(segment);
@@ -337,24 +313,7 @@ void ChainState::Configure(
       } else {
         // Create a free-running channel.
         segment::Configuration c = local_channel(i)->configuration(local_configs[i]);
-        if (force_independent) {
-          bool has_trigger = has_gate_source[i];
-          // Only reconfigure when something actually changed: this channel's
-          // own config/patch state (dirty_), whether normalization now feeds
-          // it a trigger or not, or its generator being in a stale state
-          // (e.g. right after a mode switch). Configuring unconditionally
-          // every cycle (as ConfigureSingleSegment does on its own) resets
-          // PLL/clock tracking on every call, which breaks clocked/looping
-          // segments.
-          if (dirty_[channel]
-              || has_trigger != independent_has_trigger_[i]
-              || segment_generator[i].num_segments() != 1) {
-            segment_generator[i].Configure(has_trigger, &c, 1);
-            independent_has_trigger_[i] = has_trigger;
-          }
-        } else {
-          segment_generator[i].ConfigureSingleSegment(false, c);
-        }
+        segment_generator[i].ConfigureSingleSegment(false, c);
         binding_[num_bindings_].generator = i;
         binding_[num_bindings_].source = i;
         binding_[num_bindings_].destination = 0;
@@ -651,10 +610,7 @@ void ChainState::HandleRequest(Settings* settings) {
     return;
   }
 
-  const uint8_t num_types =
-      (settings->state().multimode == MULTI_MODE_STAGES_ADVANCED
-       || settings->state().multimode == MULTI_MODE_STAGES_ADVANCED_INDEPENDENT)
-      ? 4 : 3;
+  const uint8_t num_types = settings->state().multimode == MULTI_MODE_STAGES_ADVANCED ? 4 : 3;
 
   State* s = settings->mutable_state();
   bool dirty = false;

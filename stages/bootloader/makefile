@@ -42,12 +42,6 @@ PACKAGES       = stages/bootloader \
 		stmlib/system
 RESOURCES      = stages/resources
 
-TOOLCHAIN_PATH ?=
+TOOLCHAIN_PATH ?= /usr/local/arm-4.8.3/
 
 include stmlib/makefile.inc
-
-# stmlib/makefile.inc always appends "bin/" to TOOLCHAIN_PATH to build
-# TOOLCHAIN_BIN, so an empty TOOLCHAIN_PATH still points at a broken
-# relative "bin/arm-none-eabi-gcc" instead of falling back to $PATH.
-# Clear TOOLCHAIN_BIN itself so CC/CXX/etc resolve as bare command names.
-TOOLCHAIN_BIN =

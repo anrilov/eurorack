@@ -68,6 +68,66 @@ namespace stages {
     }
   }
 
+  void EnvelopeManager::SetAllDelayLength(float value) {
+    for (uint8_t envelope = 0; envelope < kNumChannels; ++envelope) {
+      get_envelope(envelope).SetDelayLength(value);
+    }
+  }
+
+  void EnvelopeManager::SetAllAttackLength(float value) {
+    for (uint8_t envelope = 0; envelope < kNumChannels; ++envelope) {
+      get_envelope(envelope).SetAttackLength(value);
+    }
+  }
+
+  void EnvelopeManager::SetAllAttackCurve(float value) {
+    for (uint8_t envelope = 0; envelope < kNumChannels; ++envelope) {
+      get_envelope(envelope).SetAttackCurve(value);
+    }
+  }
+
+  void EnvelopeManager::SetAllHoldLength(float value) {
+    for (uint8_t envelope = 0; envelope < kNumChannels; ++envelope) {
+      get_envelope(envelope).SetHoldLength(value);
+    }
+  }
+
+  void EnvelopeManager::SetAllDecayLength(float value) {
+    for (uint8_t envelope = 0; envelope < kNumChannels; ++envelope) {
+      get_envelope(envelope).SetDecayLength(value);
+    }
+  }
+
+  void EnvelopeManager::SetAllDecayCurve(float value) {
+    for (uint8_t envelope = 0; envelope < kNumChannels; ++envelope) {
+      get_envelope(envelope).SetDecayCurve(value);
+    }
+  }
+
+  void EnvelopeManager::SetAllSustainLevel(float value) {
+    for (uint8_t envelope = 0; envelope < kNumChannels; ++envelope) {
+      get_envelope(envelope).SetSustainLevel(value);
+    }
+  }
+
+  void EnvelopeManager::SetAllSustainLength(float value) {
+    for (uint8_t envelope = 0; envelope < kNumChannels; ++envelope) {
+      get_envelope(envelope).SetSustainLength(value);
+    }
+  }
+
+  void EnvelopeManager::SetAllReleaseLength(float value) {
+    for (uint8_t envelope = 0; envelope < kNumChannels; ++envelope) {
+      get_envelope(envelope).SetReleaseLength(value);
+    }
+  }
+
+  void EnvelopeManager::SetAllReleaseCurve(float value) {
+    for (uint8_t envelope = 0; envelope < kNumChannels; ++envelope) {
+      get_envelope(envelope).SetReleaseCurve(value);
+    }
+  }
+
   void EnvelopeManager::SetDelayLength(uint8_t channel, float value) {
     get_envelope(channel).SetDelayLength(value);
     SetIndependentEGState(channel, IEG_DELAY_LENGTH, value);
