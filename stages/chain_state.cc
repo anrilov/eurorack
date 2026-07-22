@@ -44,6 +44,8 @@ const uint32_t kSimpleLeftKey = stmlib::FourCC<'s', 'g', 's', 'l'>::value;
 const uint32_t kSimpleRightKey = stmlib::FourCC<'s', 'g', 's', 'r'>::value;
 const uint32_t kAdvancedLeftKey = stmlib::FourCC<'s', 'g', 'a', 'l'>::value;
 const uint32_t kAdvancedRightKey = stmlib::FourCC<'s', 'g', 'a', 'r'>::value;
+const uint32_t kIndependentLeftKey = stmlib::FourCC<'s', 'g', 'i', 'l'>::value;
+const uint32_t kIndependentRightKey = stmlib::FourCC<'s', 'g', 'i', 'r'>::value;
 
 // How long before unpatching an input actually breaks the chain.
 const uint32_t kUnpatchedInputDelay = 2000;
@@ -90,6 +92,7 @@ void ChainState::Reinit(const Settings& settings) {
   fill(&loop_status_[0], &loop_status_[kNumChannels], LOOP_STATUS_NONE);
   fill(&switch_pressed_[0], &switch_pressed_[kMaxChainSize], 0);
   fill(&switch_press_time_[0], &switch_press_time_[kMaxNumChannels], 0);
+  fill(&independent_configured_[0], &independent_configured_[kNumChannels], false);
 
   request_.request = REQUEST_NONE;
 
@@ -102,9 +105,13 @@ void ChainState::Reinit(const Settings& settings) {
     leftKey = kAdvancedLeftKey;
     rightKey = kAdvancedRightKey;
   } else if (settings.state().multimode == MULTI_MODE_STAGES_ADVANCED_INDEPENDENT) {
-    // Channels never group, even across chained modules, so there's no need
-    // to discover/synchronize with neighboring modules.
-    status_ = CHAIN_READY;
+    // Channels never group, even across chained modules, so a neighbor
+    // discovered here never actually affects segment configuration - this is
+    // only so the mode gets the same neighbor-discovery LED animation as
+    // modes 1/2 on entry. Uses its own key so it never pairs with an
+    // adjacent module running a different (grouping) mode.
+    leftKey = kIndependentLeftKey;
+    rightKey = kIndependentRightKey;
   } else if (settings.in_seg_gen_mode()) {
     // Standard and slow LFO are the same
     leftKey = kSimpleLeftKey;
@@ -336,8 +343,26 @@ void ChainState::Configure(
       } else {
         // Create a free-running channel.
         segment::Configuration c = local_channel(i)->configuration(local_configs[i]);
-        segment_generator[i].ConfigureSingleSegment(
-            force_independent && has_gate_source[i], c);
+        if (force_independent) {
+          bool has_trigger = has_gate_source[i];
+          const segment::Configuration& last = independent_last_config_[i];
+          bool needs_configure = !independent_configured_[i]
+              || has_trigger != independent_last_has_trigger_[i]
+              || c.type != last.type
+              || c.loop != last.loop
+              || c.bipolar != last.bipolar
+              || c.range != last.range
+              || c.quant_scale != last.quant_scale
+              || c.reset_on_gate != last.reset_on_gate;
+          if (needs_configure) {
+            segment_generator[i].ConfigureSingleSegment(has_trigger, c);
+            independent_last_config_[i] = c;
+            independent_last_has_trigger_[i] = has_trigger;
+            independent_configured_[i] = true;
+          }
+        } else {
+          segment_generator[i].ConfigureSingleSegment(false, c);
+        }
         binding_[num_bindings_].generator = i;
         binding_[num_bindings_].source = i;
         binding_[num_bindings_].destination = 0;
