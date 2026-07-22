@@ -117,6 +117,10 @@ class Ui {
 
   uint32_t discrete_change_time_[kNumChannels];
 
+  // Timestamp (system_clock.milliseconds()) of the last mode switch, used to
+  // drive the independent-advanced mode's entry wave animation.
+  uint32_t mode_switch_time_ = 0;
+
   Settings* settings_;
   ChainState* chain_state_;
   CvReader* cv_reader_;

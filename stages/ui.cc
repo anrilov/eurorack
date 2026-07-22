@@ -61,6 +61,38 @@ const LedColor Ui::palette_[4] = {
   LED_COLOR_OFF,
 };
 
+namespace {
+
+inline uint32_t LerpColor(uint32_t a, uint32_t b, float t) {
+  CONSTRAIN(t, 0.0f, 1.0f);
+  float ar = (a >> 16) & 0xff, ag = (a >> 8) & 0xff, ab = a & 0xff;
+  float br = (b >> 16) & 0xff, bg = (b >> 8) & 0xff, bb = b & 0xff;
+  uint32_t r = static_cast<uint32_t>(ar + (br - ar) * t);
+  uint32_t g = static_cast<uint32_t>(ag + (bg - ag) * t);
+  uint32_t bl = static_cast<uint32_t>(ab + (bb - ab) * t);
+  return (r << 16) | (g << 8) | bl;
+}
+
+// Color for a channel's local phase (0..1) through an off -> green -> yellow
+// -> red -> off cycle, smoothly cross-fading between each stop.
+// Outside [0, 1), the channel is off.
+uint32_t WaveColor(float phase) {
+  if (phase < 0.0f || phase >= 1.0f) {
+    return LED_COLOR_OFF;
+  }
+  const uint32_t stops[5] = {
+    LED_COLOR_OFF, LED_COLOR_GREEN, LED_COLOR_YELLOW, LED_COLOR_RED,
+    LED_COLOR_OFF,
+  };
+  float scaled = phase * 4.0f;
+  int segment = static_cast<int>(scaled);
+  CONSTRAIN(segment, 0, 3);
+  return LerpColor(
+      stops[segment], stops[segment + 1], scaled - static_cast<float>(segment));
+}
+
+}  // namespace
+
 void Ui::Init(Settings* settings, ChainState* chain_state, CvReader* cv_reader, EnvelopeMode* eg_mode) {
   leds_.Init();
   switches_.Init();
@@ -330,6 +362,7 @@ void Ui::MultiModeToggle(const uint8_t i) {
     settings_->SaveStateWithDebounce();
     chain_state_->start_reinit();
     eg_mode_->ReInit();
+    mode_switch_time_ = system_clock.milliseconds();
   }
 }
 
@@ -513,6 +546,24 @@ void Ui::UpdateLEDs() {
           }
         }
       }
+    }
+  } else if (multimode == MULTI_MODE_STAGES_ADVANCED_INDEPENDENT &&
+             (chain_state_->status() == ChainState::CHAIN_REINITIALIZING ||
+              chain_state_->status() == ChainState::CHAIN_DISCOVERING_NEIGHBORS)) {
+    // Entry wave: each channel's LED sweeps off -> green -> yellow -> red ->
+    // off, staggered channel by channel so it looks like a wave traveling
+    // from channel 1 to channel 6. Runs for as long as the mode switch is
+    // settling (same window modes 1/2 use for their own entry animation).
+    const uint32_t kWaveStaggerMs = 300;
+    const uint32_t kWaveChannelCycleMs = 500;
+    uint32_t elapsed = ms - mode_switch_time_;
+    for (size_t i = 0; i < kNumChannels; ++i) {
+      int32_t local = static_cast<int32_t>(elapsed)
+          - static_cast<int32_t>(i * kWaveStaggerMs);
+      float phase = static_cast<float>(local)
+          / static_cast<float>(kWaveChannelCycleMs);
+      leds_.set(LED_GROUP_UI + i, WaveColor(phase));
+      leds_.set(LED_GROUP_SLIDER + i, LED_COLOR_OFF);
     }
   } else if (chain_state_->status() == ChainState::CHAIN_REINITIALIZING) {
     show_mode();
