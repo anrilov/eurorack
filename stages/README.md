@@ -134,7 +134,7 @@ Hold one of the six buttons for 5 seconds to change mode. This setting is persis
 1. [Segment generator](#segment-generator)
 2. [Advanced Segment generator](#advanced-segment-generator)
 3. [Six independent DAHDSR envelope generators](#six-independent-dahdsr-envelope-generators)
-4. [Six identical DAHDSR envelope generators](#six-identical-dahdsr-envelope-generators)
+4. [Advanced segment generator, independent channels](#advanced-segment-generator-independent-channels)
 5. [Harmonic oscillator](#harmonic-oscillator), aka Ouroboros mode
 6. Harmonic oscillator with [alternate controls](#harmonic-oscillator-with-alternate-controls)
 
@@ -316,22 +316,15 @@ Each duration goes from 0 to 10 seconds. The hold phase is always at maximum lev
 **GATE** inputs are used to activate each of the six envelopes, which can be taken from the corresponding outputs on the bottom of the module. LEDs below pots show the current phase of each envelope: green for delay/attack/hold/decay, orange for sustain, red for release. The selected envelope will be yellow when idle while the inactive envelopes will be off when idle.
 
 
-### Six identical DAHDSR envelope generators
+### Advanced segment generator, independent channels
 
-The module transforms into a generator of six identical envelopes. **Sliders** controls the duration (or level) of each stage of all envelopes. From left to right:
+This mode has the exact same segment types and per-segment behavior as the [advanced segment generator](#advanced-segment-generator) mode (ramp/step/hold/random segments, polarity, LFO/frequency range, quantizing, etc.), but channels **never** group into multi-segment envelopes, even if a gate/trigger input is left unpatched. Each of the 6 channels is always its own independent single segment.
 
-1. Duration of the **delay** phase
-2. Duration of the **attack** phase
-3. Duration of the **hold** phase
-4. Duration of the **decay** phase
-5. Level of the **sustain** phase
-6. Duration of the **release** phase
+Because channels don't group, unpatched gate/trigger inputs are instead **normalized down** from the nearest patched input above them: if you patch a trigger into input 6 and leave inputs 5, 4, 3... unpatched, they all receive channel 6's trigger too, down to the first channel that has its own cable patched in - that channel (and anything unpatched below it) starts its own, separate normalization chain. A channel with nothing patched above it, and nothing patched into itself, receives no trigger at all and runs free (exactly like an unpatched channel in the advanced segment generator mode).
 
-Each duration goes from 0 to 10 seconds. Each value can be **modulated** using **TIME/LEVEL** inputs. The hold phase is always at maximum level (8V). Each stage can be "disabled" by setting the slider to the bottom; the LED on the slider will turn off to indicate that. For example, set sliders 1 and 3 to zero to get six standard ADSR envelopes.
+This is useful for driving several independent envelopes/LFOs/etc. from the same trigger without needing to multiply it externally, while still being able to patch a different trigger into any channel to break off its own independent group.
 
-**SHAPE/TIME** pots 2, 4 and 6 control the **shape** of the corresponding ramp stages, from accelerating through linear, to decelerating. Pots 1, 3 and 5 are unused.
-
-**GATE** inputs are used to activate each of the six envelopes, which can be taken from the corresponding outputs on the bottom of the module. LEDs below pots show the current phase of each envelope: green for delay/attack/hold/decay, orange for sustain, red for release, off when idle. Pressing a **button** will trigger the corresponding envelope manually, like it's a gate signal.
+As with the advanced segment generator mode, adjacent chained modules never merge channels across this mode, so a chain will always split here.
 
 
 ### Harmonic oscillator

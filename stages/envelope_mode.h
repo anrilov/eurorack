@@ -53,7 +53,6 @@ namespace stages {
 
     void ProcessEnvelopes(IOBuffer::Block* block, size_t size);
     void ProcessSixIndependentEgs(IOBuffer::Block* block, size_t size);
-    void ProcessSixIdenticalEgs(IOBuffer::Block* block, size_t size);
 
   private:
     EnvelopeManager envelope_manager_;

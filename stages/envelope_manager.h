@@ -62,23 +62,6 @@ namespace stages {
     void Init(Settings* settings);
     void ReInit();
 
-    // Sets the given value on all envelopes. Does NOT store the values in
-    // state. This is used in identical eg mode where the envelopes reflect the
-    // current slider positions at all times (and so don't need state stored).
-    //
-    // It is recommended to use these functions over setting envelope values
-    // directly.
-    void SetAllDelayLength(float value);
-    void SetAllAttackLength(float value);
-    void SetAllAttackCurve(float value);
-    void SetAllHoldLength(float value);
-    void SetAllDecayLength(float value);
-    void SetAllDecayCurve(float value);
-    void SetAllSustainLevel(float value);
-    void SetAllSustainLength(float value); // sets min sustain length
-    void SetAllReleaseLength(float value);
-    void SetAllReleaseCurve(float value);
-
     // Sets the given value on the given envelope channel. Also stores the value
     // in state. This is used in individual eg mode where the envelopes do not
     // necessarily reflect the current slider positions. State is stored so that

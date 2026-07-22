@@ -155,7 +155,8 @@ class Settings {
   inline bool in_seg_gen_mode() const {
     return state_.multimode == MULTI_MODE_STAGES
       || state_.multimode == MULTI_MODE_STAGES_ADVANCED
-      || state_.multimode == MULTI_MODE_STAGES_SLOW_LFO;
+      || state_.multimode == MULTI_MODE_STAGES_SLOW_LFO
+      || state_.multimode == MULTI_MODE_STAGES_ADVANCED_INDEPENDENT;
   }
 
   inline bool in_ouroboros_mode() const {
