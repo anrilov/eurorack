@@ -45,7 +45,7 @@ PACKAGES       = stages \
 		stmlib/system
 RESOURCES      = stages/resources
 
-TOOLCHAIN_PATH ?= /usr/local/arm-4.8.3/
+TOOLCHAIN_PATH ?=
 ifdef FLIPPED
 	PROJECT_CONFIGURATION = -DFLIPPED
 	TARGET:=$(TARGET)-flipped
