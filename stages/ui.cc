@@ -47,8 +47,8 @@ namespace stages {
 const MultiMode Ui::multimodes_[6] = {
   MULTI_MODE_STAGES, // Mode enabled by long pressing the left-most button
   MULTI_MODE_STAGES_ADVANCED,
-  MULTI_MODE_SIX_INDEPENDENT_EGS,
   MULTI_MODE_STAGES_ADVANCED_INDEPENDENT,
+  MULTI_MODE_SIX_INDEPENDENT_EGS,
   MULTI_MODE_OUROBOROS,
   MULTI_MODE_OUROBOROS_ALTERNATE, // Mode enabled by long pressing the right-most button
 };
@@ -554,8 +554,8 @@ void Ui::UpdateLEDs() {
     // off, staggered channel by channel so it looks like a wave traveling
     // from channel 1 to channel 6. Runs for as long as the mode switch is
     // settling (same window modes 1/2 use for their own entry animation).
-    const uint32_t kWaveStaggerMs = 300;
-    const uint32_t kWaveChannelCycleMs = 500;
+    const uint32_t kWaveStaggerMs = 150;
+    const uint32_t kWaveChannelCycleMs = 250;
     uint32_t elapsed = ms - mode_switch_time_;
     for (size_t i = 0; i < kNumChannels; ++i) {
       int32_t local = static_cast<int32_t>(elapsed)
@@ -565,10 +565,13 @@ void Ui::UpdateLEDs() {
       leds_.set(LED_GROUP_UI + i, WaveColor(phase));
       leds_.set(LED_GROUP_SLIDER + i, LED_COLOR_OFF);
     }
+    // Keep the selected mode's own button lit solid red throughout, like
+    // the other modes' entry animations do.
+    show_mode();
   } else if (chain_state_->status() == ChainState::CHAIN_REINITIALIZING) {
     show_mode();
   } else if (chain_state_-> status() == ChainState::CHAIN_DISCOVERING_NEIGHBORS) {
-    size_t counter = ms >> 5;
+    size_t counter = ms >> 4;
     size_t n = chain_state_->size() * kNumChannels;
     counter = counter % (2 * n - 2);
     if (counter >= n) {

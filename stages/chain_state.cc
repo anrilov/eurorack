@@ -128,10 +128,10 @@ void ChainState::Reinit(const Settings& settings) {
 }
 
 void ChainState::DiscoverNeighbors() {
-  // Between t = 500ms and t = 1500ms, ping the neighbors every 50ms
-  if (counter_ >= 2000 &&
-      counter_ <= 6000 &&
-      (counter_ % 200) == 0) {
+  // Between t = 250ms and t = 750ms, ping the neighbors every 25ms
+  if (counter_ >= 1000 &&
+      counter_ <= 3000 &&
+      (counter_ % 100) == 0) {
     left_tx_packet_.discovery.key = leftKey;
     left_tx_packet_.discovery.counter = size_;
     left_->Transmit(left_tx_packet_);
@@ -154,8 +154,8 @@ void ChainState::DiscoverNeighbors() {
 
   bool ouroboros_ = index_ >= kMaxChainSize || size_ > kMaxChainSize;
 
-  // The discovery phase lasts 2000ms.
-  status_ = counter_ < 8000 && !ouroboros_ ? CHAIN_DISCOVERING_NEIGHBORS : CHAIN_READY;
+  // The discovery phase lasts 1000ms.
+  status_ = counter_ < 4000 && !ouroboros_ ? CHAIN_DISCOVERING_NEIGHBORS : CHAIN_READY;
   if (status_ == CHAIN_DISCOVERING_NEIGHBORS) {
     ++counter_;
   } else {
@@ -165,14 +165,14 @@ void ChainState::DiscoverNeighbors() {
 
 void ChainState::StartReinit(const Settings& settings) {
   // counter_ may have ticked up... do a couple times just to be safe
-  if ((counter_ % 200) == 0) {
+  if ((counter_ % 100) == 0) {
     left_tx_packet_.discovery.key = kReinitKey;
     left_tx_packet_.discovery.counter = kReinitCount;
     right_tx_packet_.discovery.key = kReinitKey;
     right_tx_packet_.discovery.counter = kReinitCount;
     left_->Transmit(left_tx_packet_);
     right_->Transmit(right_tx_packet_);
-  } else if (counter_ >= 2000) {
+  } else if (counter_ >= 1000) {
     Reinit(settings);
   }
   ++counter_;
