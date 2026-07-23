@@ -39,7 +39,7 @@
 
 #include "stages/settings.h"
 
-const int32_t kLongPressDurationForMultiModeToggle = 5000;
+const int32_t kLongPressDurationForMultiModeToggle = 3000;
 const int32_t kDiscreteStateBrightDur = 4000;
 const int32_t kDiscreteStateBlinkDur = 120;
 const uint32_t kDiscreteStatePreBlinkDur = 30;

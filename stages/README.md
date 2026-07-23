@@ -70,7 +70,7 @@ Reference tables
 - Button + slider: Hold button and move slider to top, middle, or bottom to change value
 - Button + pot: Hold button and wiggle pot to toggle
 
-Control overview (modes in order of corresponding button; hold button for 5 seconds to switch):
+Control overview (modes in order of corresponding button; hold button for 3 seconds to switch):
 | Mode             | Button   | Hold button 1s | Slider + CV                                                    | Pot                                                                       | Button + slider                                                  | Button + pot                                            |
 | ---------------- | -------- | -------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------- |
 | Segment gen      | Seg type | Toggle ➰     | <pre>Time:  🟢<br>Level: 🟡🔴</pre>                         | <pre>Shape: 🟢🟡<br>Time:  🔴                                          | <pre>Time range:  🟢<br>Quant scale: 🟡🔴</pre>               | <pre>Polarity: ➰🟢,🟡🔴<br>Re-trig:  🟢</pre>     |
@@ -129,7 +129,7 @@ Harmonic oscillator shapes:
 Multi-mode usage
 -----
 
-Hold one of the six buttons for 5 seconds to change mode. This setting is persisted when the module reboots. From left to right:
+Hold one of the six buttons for 3 seconds to change mode. This setting is persisted when the module reboots. From left to right:
 
 1. [Segment generator](#segment-generator)
 2. [Advanced Segment generator](#advanced-segment-generator)
