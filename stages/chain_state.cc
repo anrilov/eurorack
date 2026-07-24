@@ -355,7 +355,14 @@ void ChainState::Configure(
               || c.quant_scale != last.quant_scale
               || c.reset_on_gate != last.reset_on_gate;
           if (needs_configure) {
-            segment_generator[i].ConfigureSingleSegment(has_trigger, c);
+            // Configure() (rather than calling ConfigureSingleSegment
+            // directly) also (re-)initializes function_quantizer_ to match
+            // c.range's divider-ratio table - needed for clocked/random LFO
+            // segments to pick the correct clock multiplier per slider
+            // range (slow/default/fast). ConfigureSingleSegment alone
+            // leaves it at whatever it was last sized for, which is what
+            // made the slow/fast slider positions pick wrong ratios here.
+            segment_generator[i].Configure(has_trigger, &c, 1);
             independent_last_config_[i] = c;
             independent_last_has_trigger_[i] = has_trigger;
             independent_configured_[i] = true;
